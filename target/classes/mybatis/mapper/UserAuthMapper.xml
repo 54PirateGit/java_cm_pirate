@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.chengm.pirate.dao.UserAuthDao">
+
+    <resultMap id="baseResultMap" type="com.chengm.pirate.pojo.UserAuth">
+        <id column="uid" property="uid" jdbcType="BIGINT"/>
+        <result column="identity_type" property="identityType" jdbcType="VARCHAR"/>
+        <result column="password" property="password" jdbcType="VARCHAR"/>
+        <result column="identifier" property="identifier" jdbcType="INTEGER"/>
+        <result column="create_time" property="createTime" jdbcType="TIMESTAMP"/>
+        <result column="update_time" property="updateTime" jdbcType="TIMESTAMP"/>
+        <result column="token" property="token" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <select id="getUser" parameterType="long" resultType="com.chengm.pirate.pojo.UserAuth">
+        select * from user_auth where uid = #{uid}
+    </select>
+
+    <select id="getUserByIdentifier" parameterType="String" resultType="com.chengm.pirate.pojo.UserAuth">
+        select * from user_auth where identifier = #{identifier}
+    </select>
+
+    <insert id="insert" parameterType="com.chengm.pirate.pojo.UserAuth">
+        insert into user_auth
+        (uid,identity_type,password,identifier, token)
+        values
+        (#{uid},#{identityType},#{password},#{identifier},#{token})
+    </insert>
+
+    <update id="delete" parameterType="long">
+        update user_auth set del_flag = 0 where uid = #{uid}
+    </update>
+
+    <update id="update" parameterType="com.chengm.pirate.pojo.UserAuth">
+        update user_auth set
+            password = #{password},
+            identifier = #{identifier}
+        where uid = #{uid}
+    </update>
+
+    <update id="updateUserToken" parameterType="Map">
+        update user_auth set
+            token = #{token}
+        where uid = #{uid}
+    </update>
+
+    <update id="updateUserPwd" parameterType="Map">
+        update user_auth set
+            password = #{pwd}
+        where uid = #{uid}
+    </update>
+
+    <update id="updateUserIdentifier" parameterType="Map">
+        update user_auth set
+            identifier = #{identifier}
+        where uid = #{uid}
+    </update>
+
+</mapper>
