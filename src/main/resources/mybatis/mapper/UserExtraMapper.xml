@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.chengm.pirate.dao.UserExtraDao">
+
+    <resultMap id="baseResultMap" type="com.chengm.pirate.pojo.UserExtra">
+        <id column="uid" property="uid" jdbcType="BIGINT"/>
+        <result column="vendor" property="vendor" jdbcType="VARCHAR"/>
+        <result column="client_name" property="clientName" jdbcType="VARCHAR"/>
+        <result column="client_version" property="clientVersion" jdbcType="VARCHAR"/>
+        <result column="os_name" property="osName" jdbcType="VARCHAR"/>
+        <result column="os_version" property="osVersion" jdbcType="VARCHAR"/>
+        <result column="device_name" property="deviceName" jdbcType="VARCHAR"/>
+        <result column="device_id" property="deviceId" jdbcType="VARCHAR"/>
+        <result column="idfa" property="idfa" jdbcType="VARCHAR"/>
+        <result column="idfv" property="idfv" jdbcType="VARCHAR"/>
+        <result column="extend1" property="extend1" jdbcType="VARCHAR"/>
+        <result column="extend2" property="extend2" jdbcType="VARCHAR"/>
+        <result column="extend3" property="extend3" jdbcType="VARCHAR"/>
+        <result column="create_time" property="createTime" jdbcType="TIMESTAMP"/>
+        <result column="update_time" property="updateTime" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <select id="getUserExtra" parameterType="long" resultType="com.chengm.pirate.pojo.UserExtra">
+        select * from user_extra where uid = #{uid}
+    </select>
+
+    <insert id="insert" parameterType="com.chengm.pirate.pojo.UserExtra">
+        insert into user_extra
+        (uid,vendor,client_name,client_version, os_name,
+        os_version, device_name, device_id, idfa, idfv, extend1, extend2, extend3)
+        values
+        (#{uid},#{vendor},#{clientName},#{clientVersion},#{osName},
+        #{osVersion},#{deviceName},#{deviceId},#{idfa},#{idfv},#{extend1},#{extend2},#{extend3})
+    </insert>
+
+    <update id="delete" parameterType="long">
+        update user_extra set del_flag = 0 where uid = #{uid}
+    </update>
+
+    <update id="update" parameterType="com.chengm.pirate.pojo.UserAuth">
+        update user_extra set
+            vendor = #{vendor},
+            client_name = #{clientName},
+            client_version = #{clientVersion},
+            os_name = #{osName},
+            os_version = #{osVersion},
+            device_name = #{deviceName},
+            device_id = #{deviceId},
+            idfa = #{idfa},
+            idfv = #{idfv},
+            extend1 = #{extend1},
+            extend2 = #{extend2},
+            extend3 = #{extend3}
+        where uid = #{uid}
+    </update>
+
+    <update id="updateDeviceId" parameterType="Map">
+        update user_extra set
+            device_id = #{deviceId}
+        where uid = #{uid}
+    </update>
+
+</mapper>

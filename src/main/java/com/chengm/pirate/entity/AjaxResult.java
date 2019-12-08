@@ -2,6 +2,9 @@ package com.chengm.pirate.entity;
 
 import com.chengm.pirate.utils.constant.CodeConstants;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * program: CmPirate
  * description: 返回数据
@@ -62,6 +65,16 @@ public class AjaxResult<T> {
      */
     public static AjaxResult success(Object data) {
         return new AjaxResult(CODE_SUCCESS, MSG_SUCCESS, data);
+    }
+
+    /**
+     * 请求成功并将数据返回
+     */
+    public static AjaxResult success(Map<String, Object> result) {
+        if (result != null && result.size() > 0) {
+            return new AjaxResult(CODE_SUCCESS, MSG_SUCCESS, result);
+        }
+        return new AjaxResult(CODE_SUCCESS, MSG_SUCCESS);
     }
 
     /**

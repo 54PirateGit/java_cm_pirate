@@ -1,5 +1,7 @@
 package com.chengm.pirate.utils;
 
+import com.chengm.pirate.utils.constant.Constants;
+
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -36,6 +38,16 @@ public class VerifyUtil {
         Pattern p = Pattern.compile(regEx1);
         Matcher m = p.matcher(email);
         return m.matches();
+    }
+
+    /**
+     * 验证是不是我们支持的客户端
+     */
+    public static boolean isClient(String osName) {
+        if (StringUtil.isEmpty(osName)) {
+            return false;
+        }
+        return osName.equals(Constants.CLIENT_ANDROID) || osName.equals(Constants.CLIENT_IOS);
     }
 
 }

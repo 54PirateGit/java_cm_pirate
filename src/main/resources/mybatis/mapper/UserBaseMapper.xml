@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.chengm.pirate.dao.UserBaseDao">
+
+    <resultMap id="baseResultMap" type="com.chengm.pirate.pojo.UserBase">
+        <id column="uid" property="uid" jdbcType="BIGINT"/>
+        <result column="user_role" property="userRole" jdbcType="INTEGER"/>
+        <result column="register_source" property="registerSource" jdbcType="INTEGER"/>
+        <result column="user_name" property="userName" jdbcType="VARCHAR"/>
+        <result column="gender" property="gender" jdbcType="INTEGER"/>
+        <result column="birthday" property="birthday" jdbcType="BIGINT"/>
+        <result column="signature" property="signature" jdbcType="VARCHAR"/>
+        <result column="mobile" property="mobile" jdbcType="VARCHAR"/>
+        <result column="mobile_bind_time" property="mobileBindTime" jdbcType="BIGINT"/>
+        <result column="email" property="email" jdbcType="VARCHAR"/>
+        <result column="email_bind_time" property="emailBindTime" jdbcType="BIGINT"/>
+        <result column="face" property="face" jdbcType="VARCHAR"/>
+        <result column="face200" property="face200" jdbcType="VARCHAR"/>
+        <result column="srcface" property="srcface" jdbcType="VARCHAR"/>
+        <result column="city" property="city" jdbcType="VARCHAR"/>
+        <result column="create_time" property="createTime" jdbcType="TIMESTAMP"/>
+        <result column="update_time" property="updateTime" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <select id="getUserBase" parameterType="long" resultType="com.chengm.pirate.pojo.UserBase">
+        select * from user_base where uid = #{uid}
+    </select>
+
+    <insert id="insert" parameterType="com.chengm.pirate.pojo.UserBase">
+        insert into user_base
+        (uid,user_role,register_source,user_name, gender,birthday,
+        signature, mobile, mobile_bind_time, email, email_bind_time, face, face200, srcface, city)
+        values
+        (#{uid},#{userRole},#{registerSource},#{userName},#{gender},#{birthday},
+        #{signature},#{mobile},#{mobileBindTime},#{email},#{emailBindTime},#{face},#{face200},#{srcface},#{city})
+    </insert>
+
+    <update id="delete" parameterType="long">
+        update user_base set del_flag = 0 where uid = #{uid}
+    </update>
+
+    <update id="update" parameterType="Map">
+        update user_base set
+        <set>
+            <foreach collection="fields.entrySet()" index="key" item="value" separator=",">
+                <if test="key != 'uid'.toString()">
+                    ${key} = #{value}
+                </if>
+            </foreach>
+        </set>
+        where uid = #{uid}
+    </update>
+
+</mapper>
