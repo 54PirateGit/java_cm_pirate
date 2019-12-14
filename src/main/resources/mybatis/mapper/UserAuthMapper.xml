@@ -31,7 +31,7 @@
     </insert>
 
     <update id="delete" parameterType="long">
-        update user_auth set del_flag = 0 where uid = #{uid}
+        delete from user_auth where uid = #{uid}
     </update>
 
     <update id="update" parameterType="com.chengm.pirate.pojo.UserAuth">

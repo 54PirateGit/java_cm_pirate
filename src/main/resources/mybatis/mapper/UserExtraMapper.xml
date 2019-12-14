@@ -36,9 +36,9 @@
         #{osVersion},#{deviceName},#{deviceId},#{idfa},#{idfv},#{extend1},#{extend2},#{extend3})
     </insert>
 
-    <update id="delete" parameterType="long">
-        update user_extra set del_flag = 0 where uid = #{uid}
-    </update>
+    <delete id="delete" parameterType="long">
+        delete from user_extra where uid = #{uid}
+    </delete>
 
     <update id="update" parameterType="com.chengm.pirate.pojo.UserAuth">
         update user_extra set

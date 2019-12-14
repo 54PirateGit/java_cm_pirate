@@ -39,12 +39,12 @@
         #{signature},#{mobile},#{mobileBindTime},#{email},#{emailBindTime},#{face},#{face200},#{srcface},#{city},#{pushToken})
     </insert>
 
-    <update id="delete" parameterType="long">
-        update user_base set del_flag = 0 where uid = #{uid}
-    </update>
+    <delete id="delete" parameterType="long">
+        delete from user_base where uid = #{uid}
+    </delete>
 
     <update id="update" parameterType="Map">
-        update user_base set
+        update user_base
         <set>
             <foreach collection="fields.entrySet()" index="key" item="value" separator=",">
                 <if test="key != 'uid'.toString()">

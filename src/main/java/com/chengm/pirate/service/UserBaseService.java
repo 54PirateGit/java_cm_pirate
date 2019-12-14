@@ -5,6 +5,7 @@ import com.chengm.pirate.pojo.UserBase;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -47,7 +48,10 @@ public class UserBaseService {
     /**
      * 更新用户信息
      */
-    public void update(Map<String, Object> param) {
+    public void update(Map<String, Object> fields, long uid) {
+        Map<String, Object> param = new HashMap<>();
+        param.put("uid", uid);
+        param.put("fields", fields);
         mDao.update(param);
     }
 

@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.chengm.pirate.dao.UserLocalDao">
+
+    <resultMap id="baseResultMap" type="com.chengm.pirate.pojo.UserLocal">
+        <id column="uid" property="uid" jdbcType="BIGINT"/>
+        <result column="curr_nation" property="currNation" jdbcType="VARCHAR"/>
+        <result column="curr_province" property="currProvince" jdbcType="VARCHAR"/>
+        <result column="curr_city" property="currCity" jdbcType="VARCHAR"/>
+        <result column="curr_district" property="currDistrict" jdbcType="VARCHAR"/>
+        <result column="location" property="location" jdbcType="VARCHAR"/>
+        <result column="area_code" property="areaCode" jdbcType="VARCHAR"/>
+        <result column="longitude" property="longitude" jdbcType="DECIMAL"/>
+        <result column="latitude" property="latitude" jdbcType="DECIMAL"/>
+        <result column="update_time" property="updateTime" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <select id="getUserLocal" parameterType="long" resultType="com.chengm.pirate.pojo.UserLocal">
+        select * from user_location where uid = #{uid}
+    </select>
+
+    <insert id="insert" parameterType="com.chengm.pirate.pojo.UserLocal">
+        insert into user_location
+        (uid, curr_nation, curr_province, curr_city, curr_district, location, area_code, longitude, latitude)
+        values
+        (#{uid},#{currNation},#{currProvince},#{currCity},#{currDistrict}, #{location},#{areaCode},#{longitude},#{latitude})
+    </insert>
+
+    <delete id="delete" parameterType="long">
+        delete from user_location where uid = #{uid}
+    </delete>
+
+    <update id="update" parameterType="com.chengm.pirate.pojo.UserLocal">
+        update user_location set
+            curr_nation = #{currNation},
+            curr_province = #{currProvince},
+            curr_city = #{currCity},
+            curr_district = #{currDistrict},
+            location = #{location},
+            area_code = #{areaCode},
+            longitude = #{longitude},
+            latitude = #{latitude},
+        where uid = #{uid}
+    </update>
+
+    <update id="updateLocal" parameterType="Map">
+        update user_location
+        <set>
+            <foreach collection="fields.entrySet()" index="key" item="value" separator=",">
+                <if test="key != 'uid'.toString()">
+                    ${key} = #{value}
+                </if>
+            </foreach>
+        </set>
+        where uid = #{uid}
+    </update>
+
+</mapper>
