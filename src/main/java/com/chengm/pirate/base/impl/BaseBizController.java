@@ -1,8 +1,10 @@
 package com.chengm.pirate.base.impl;
 
 import com.chengm.pirate.base.BaseController;
+import com.chengm.pirate.entity.AjaxResult;
 import com.chengm.pirate.exception.InvokeException;
 import com.chengm.pirate.utils.StringUtil;
+import com.chengm.pirate.utils.VerifyUtil;
 import com.chengm.pirate.utils.constant.CodeConstants;
 import com.chengm.pirate.utils.constant.Constants;
 import com.chengm.pirate.utils.log.LogUtil;
@@ -61,6 +63,10 @@ public class BaseBizController implements BaseController {
 
         if (StringUtil.isEmpty(deviceId) || StringUtil.isEmpty(osName) || StringUtil.isEmpty(osVersion)) {
             throw new InvokeException(CodeConstants.ERROR_CODE_NOT_REQUIRED_PARAM, "参数缺失");
+        }
+        // 客户端验证， 目前支持 ANDROID IOS
+        if (!VerifyUtil.isClient(getOsName())) {
+            throw new InvokeException(CodeConstants.ERROR_CODE_INVALID_PARAMETER, "osName");
         }
 
         // 头部非必须参数，有的话就传，必要的时候易于扩展

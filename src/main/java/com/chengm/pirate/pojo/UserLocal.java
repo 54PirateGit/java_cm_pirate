@@ -31,7 +31,7 @@ public class UserLocal {
     private String currProvince;
 
     /**
-     * 所在地市
+     * 所在城市
      */
     private String currCity;
 

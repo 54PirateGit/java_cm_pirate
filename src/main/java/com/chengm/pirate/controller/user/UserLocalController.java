@@ -115,14 +115,14 @@ public class UserLocalController extends BaseBizController {
     public AjaxResult userLocal() {
         // 获取用户定位信息
         long uid = requireLongParam("uid");
-        String currNation = requireStringParam("currNation");
-        String currProvince = requireStringParam("currProvince");
-        String currCity = requireStringParam("currCity");
-        String currDistrict = requireStringParam("currDistrict");
-        String location = requireStringParam("location");
-        String areaCode = requireStringParam("areaCode");
-        double longitude = requireDoubleParam("longitude");
-        double latitude = requireDoubleParam("latitude");
+        String currNation = getStringParam("currNation", "");
+        String currProvince = getStringParam("currProvince", "");
+        String currCity = getStringParam("currCity", "");
+        String currDistrict = getStringParam("currDistrict", "");
+        String location = getStringParam("location", "");
+        String areaCode = getStringParam("areaCode", "");
+        double longitude = getDoubleParam("longitude");
+        double latitude = getDoubleParam("latitude");
 
         UserLocal local = mLocalService.getUserLocal(uid);
         if (local == null) {

@@ -8,15 +8,12 @@ import com.chengm.pirate.service.mail.EmailService;
 import com.chengm.pirate.service.user.UserBaseService;
 import com.chengm.pirate.service.user.UserExtraService;
 import com.chengm.pirate.utils.*;
-import com.chengm.pirate.utils.constant.CodeStatus;
+import com.chengm.pirate.utils.constant.*;
 import com.chengm.pirate.utils.log.LogLevel;
 import com.chengm.pirate.utils.log.LogUtil;
 import com.chengm.pirate.pojo.UserAuth;
 import com.chengm.pirate.service.user.UserAuthService;
-import com.chengm.pirate.utils.constant.CodeConstants;
-import com.chengm.pirate.utils.constant.Constants;
 import com.chengm.pirate.utils.ids.IdGenerator;
-import com.chengm.pirate.utils.constant.IdentityType;
 import com.chengm.pirate.utils.token.TokenUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -56,38 +53,24 @@ public class LoginController extends BaseBizController {
         requestMethodPost();
 
         /*
-         * 需要的参数
-         * identity_type  identifier password
+         * 需要的参数 identity_type  identifier password
          */
         int identityType = requireIntParam("identityType");
         String identifier = requireStringParam("identifier");
         String password = requireStringParam("password");
-
-        // 客户端验证， 目前支持 ANDROID IOS
-        if (!VerifyUtil.isClient(getOsName())) {
-            return AjaxResult.failInvalidParameter("osName");
-        }
 
         /*
          * 需要根据 identityType 来验证此参数
          * 1 手机号  2 微信  3 QQ  4 邮箱
          */
         if (identityType == IdentityType.IDENTITY_TYPE_PHONE) {
-            // 验证手机号码的正确性
             if (!VerifyUtil.isPhone(identifier)) {
                 return AjaxResult.fail("手机号码格式不正确");
             }
-
-        } else if (identityType == IdentityType.IDENTITY_TYPE_WECHAT) {
-            // 不需要验证
-        } else if (identityType == IdentityType.IDENTITY_TYPE_QQ) {
-            // 不需要验证
         } else if (identityType == IdentityType.IDENTITY_TYPE_EMAIL) {
-            // 验证邮箱
             if (!VerifyUtil.isEmail(identifier)) {
                 return AjaxResult.fail("邮箱格式不正确");
             }
-
         } else {
             return AjaxResult.failInvalidParameter("identityType");
         }
@@ -95,35 +78,29 @@ public class LoginController extends BaseBizController {
         // 到数据库中查询是否已经存在此用户
         UserAuth userAuth = mUserAuthService.getUser(identifier);
         if (userAuth != null) {
-            if (identityType == IdentityType.IDENTITY_TYPE_PHONE || identityType == IdentityType.IDENTITY_TYPE_EMAIL) {
-                // 验证密码的正确性, 前端需要对密码d5加密传输
-                if (!userAuth.getPassword().equals(password)) {
-                    return AjaxResult.fail("密码错误");
-                }
-
-                // 用户存在则执行登录操作
-                userAuth = userLogin(userAuth);
+            // 验证密码的正确性, 前端需要对密码d5加密传输
+            if (!userAuth.getPassword().equals(password)) {
+                return AjaxResult.fail("密码错误");
             }
+
+            // 用户存在则执行登录操作
+            userAuth = userLogin(userAuth);
         } else {
             return AjaxResult.fail(CodeConstants.USER_NOT_EXIST, "用户不存在");
         }
 
+        // 验证 deviceId
         long uid = userAuth.getUid();
-
-        // 验证 deviceId, 微信登陆和QQ登陆不验证
-        if (identityType == IdentityType.IDENTITY_TYPE_PHONE || identityType == IdentityType.IDENTITY_TYPE_EMAIL) {
-            UserExtra userExtra = mUserExtraService.getUserExtra(uid);
-            if (userExtra == null) {
-                return AjaxResult.fail(CodeConstants.USER_NOT_EXIST, "账号异常，请联系管理员");
-            }
-
-            String loginDeviceId = userExtra.getDeviceId();
-            if (!StringUtil.isEmpty(loginDeviceId)) {
-                String[] dIds = loginDeviceId.split(",");
-                List<String> ids = Arrays.asList(dIds);
-                if (!ids.contains(getDeviceId())) {
-                    return AjaxResult.fail(CodeConstants.USER_NEW_DEVICE, "在新的设备登陆，需要先验证");
-                }
+        UserExtra userExtra = mUserExtraService.getUserExtra(uid);
+        if (userExtra == null) {
+            return AjaxResult.fail(CodeConstants.USER_NOT_EXIST, "账号异常，请联系管理员");
+        }
+        String loginDeviceId = userExtra.getDeviceId();
+        if (!StringUtil.isEmpty(loginDeviceId)) {
+            String[] dIds = loginDeviceId.split(",");
+            List<String> ids = Arrays.asList(dIds);
+            if (!ids.contains(getDeviceId())) {
+                return AjaxResult.fail(CodeConstants.USER_NEW_DEVICE, "在新的设备登陆，需要先验证");
             }
         }
 
@@ -152,27 +129,15 @@ public class LoginController extends BaseBizController {
             return AjaxResult.failInvalidParameter("osName");
         }
 
-        // 参数无效
-        if (identityType < 1 || identityType > 4) {
-            return AjaxResult.failInvalidParameter("identityType");
-        }
-
         /*
          * 需要根据 identityType 来验证此参数
          * 1 手机号  2 微信  3 QQ  4 邮箱
          */
         if (identityType == IdentityType.IDENTITY_TYPE_PHONE) {
-            // 验证手机号码的正确性
             if (!VerifyUtil.isPhone(identifier)) {
                 return AjaxResult.fail("手机号码格式不正确");
             }
-
-        } else if (identityType == IdentityType.IDENTITY_TYPE_WECHAT) {
-            // 不需要验证
-        } else if (identityType == IdentityType.IDENTITY_TYPE_QQ) {
-            // 不需要验证
         } else if (identityType == IdentityType.IDENTITY_TYPE_EMAIL) {
-            // 验证邮箱
             if (!VerifyUtil.isEmail(identifier)) {
                 return AjaxResult.fail("邮箱格式不正确");
             }
@@ -184,8 +149,6 @@ public class LoginController extends BaseBizController {
          * 验证码
          * 目前未接入短信验证码，邮箱验证码需要验证
          */
-        LogUtil.logValue("length = " + StringUtil.getLength(code));
-        LogUtil.logValue("Constants.VERIFICATION_CODE_LENGTH = " + Constants.VERIFICATION_CODE_LENGTH);
         if (StringUtil.getLength(code) == Constants.VERIFICATION_CODE_LENGTH) {
             if (identityType == IdentityType.IDENTITY_TYPE_EMAIL) {
                 int codeStatus = mEmailService.checkRegisterEmailCode(identifier, code);
@@ -193,8 +156,6 @@ public class LoginController extends BaseBizController {
                     return AjaxResult.fail(CodeConstants.ERROR_CODE_PARAM_ERROR, "验证码已过期，请重新获取");
                 } else if (codeStatus == CodeStatus.CODE_FAIL) {
                     return AjaxResult.fail(CodeConstants.ERROR_CODE_PARAM_ERROR, "验证码错误");
-                } else {
-                    // 验证码正确
                 }
             } else {
                 LogUtil.logValue("CODE", "目前未接入相关短信验证码平台", LogLevel.LEVEL_WARN);
@@ -213,17 +174,58 @@ public class LoginController extends BaseBizController {
             UserAuth ua = new UserAuth();
             ua.setIdentityType(identityType);
             ua.setIdentifier(identifier);
-
             userAuth = userRegister(ua);
 
             // 更新用户基础信息
             initUserBase(userAuth.getUid(), identityType, identifier, userAuth.getToken());
         }
 
+        // 更新用户扩展信息
         long uid = userAuth.getUid();
+        updateUserExtra(uid);
+
+        // 将数据返回
+        return AjaxResult.success(getResultMap(userAuth));
+    }
+
+    /**
+     * 第三方账号登陆，目前支持微信、QQ
+     */
+    @RequestMapping("/user/thirdLogin")
+    public AjaxResult thirdLogin() {
+        int identityType = requireIntParam("identityType");
+        String identifier = requireStringParam("identifier");// 微信号或者QQ,账号的唯一标识
+        String face = getStringParam("face");
+        String city = getStringParam("city");
+        String userName = getStringParam("userName");
+        int gender = getIntParam("gender");
+        long birthday = getLongParam("birthday");
+        String signature = getStringParam("signature");
+
+        if (identityType != IdentityType.IDENTITY_TYPE_WECHAT && identityType != IdentityType.IDENTITY_TYPE_QQ) {
+            return AjaxResult.failInvalidParameter("identityType");
+        }
+
+        // 到数据库中查询是否已经存在此用户
+        UserAuth userAuth = mUserAuthService.getUser(identifier);
+        if (userAuth != null) {
+
+            // 用户存在则执行登录操作
+            userAuth = userLogin(userAuth);
+        } else {
+            // 用户不存在则创建新用户执行注册操作
+            UserAuth ua = new UserAuth();
+            ua.setIdentityType(identityType);
+            ua.setIdentifier(identifier);
+            userAuth = userRegister(ua);
+
+            // 更新用户基础信息
+            initUserBase(userAuth.getUid(), identityType, identifier, userAuth.getToken(),
+                    face, city, userName, gender, birthday, signature);
+        }
 
         // 更新用户扩展信息
-        updateUserExtra(uid);
+        updateUserExtra(userAuth.getUid());
 
         // 将数据返回
         return AjaxResult.success(getResultMap(userAuth));
@@ -315,7 +317,38 @@ public class LoginController extends BaseBizController {
                 userBase.setEmailBindTime(System.currentTimeMillis());
             }
             // 新注册用户都是正常用户
-            userBase.setUserRole(2);
+            userBase.setUserRole(Role.ROLE_NORMAL);
+            userBase.setPushToken(pushToken);
+            userBase.setUserName(identifier);
+            mUserBaseService.insert(userBase);
+        }
+    }
+
+    // 设置用户基础信息
+    private void initUserBase(long uid, int identityType, String identifier, String pushToken, String face,
+                              String city, String userName, int gender, long birthday, String signature) {
+        UserBase userBase = mUserBaseService.getUserBase(uid);
+        if (userBase == null) {
+            userBase = new UserBase();
+            userBase.setUid(uid);
+            userBase.setRegisterSource(identityType);
+            if (!StringUtil.isEmpty(face)) {
+                userBase.setFace(face);
+            }
+            if (!StringUtil.isEmpty(userName)) {
+                userBase.setUserName(userName);
+            }
+            if (!StringUtil.isEmpty(signature)) {
+                userBase.setSignature(signature);
+            }
+            if (!StringUtil.isEmpty(city)) {
+                userBase.setCity(city);
+            }
+            userBase.setGender(gender);
+            userBase.setBirthday(birthday);
+
+            // 新注册用户都是正常用户
+            userBase.setUserRole(Role.ROLE_NORMAL);
             userBase.setPushToken(pushToken);
             userBase.setUserName(identifier);
             mUserBaseService.insert(userBase);
@@ -347,12 +380,12 @@ public class LoginController extends BaseBizController {
             if (!StringUtil.isEmpty(userBase.getCity())) {
                 result.put("city", userBase.getCity());
             }
-            if (!StringUtil.isEmpty(userBase.getPushToken())) {
-                result.put("pushToken", userBase.getPushToken());
-            }
             result.put("gender", userBase.getGender());
             if (userBase.getBirthday() > 0) {
                 result.put("birthday", DateUtils.formatDate(userBase.getBirthday()));
+            }
+            if (!StringUtil.isEmpty(userBase.getSignature())) {
+                result.put("signature", userBase.getSignature());
             }
         }
         return result;
