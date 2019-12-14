@@ -4,13 +4,15 @@ import com.chengm.pirate.base.impl.BaseBizController;
 import com.chengm.pirate.entity.AjaxResult;
 import com.chengm.pirate.pojo.UserBase;
 import com.chengm.pirate.pojo.UserExtra;
-import com.chengm.pirate.service.UserBaseService;
-import com.chengm.pirate.service.UserExtraService;
+import com.chengm.pirate.service.mail.EmailService;
+import com.chengm.pirate.service.user.UserBaseService;
+import com.chengm.pirate.service.user.UserExtraService;
 import com.chengm.pirate.utils.*;
+import com.chengm.pirate.utils.constant.CodeStatus;
 import com.chengm.pirate.utils.log.LogLevel;
 import com.chengm.pirate.utils.log.LogUtil;
 import com.chengm.pirate.pojo.UserAuth;
-import com.chengm.pirate.service.UserAuthService;
+import com.chengm.pirate.service.user.UserAuthService;
 import com.chengm.pirate.utils.constant.CodeConstants;
 import com.chengm.pirate.utils.constant.Constants;
 import com.chengm.pirate.utils.ids.IdGenerator;
@@ -34,12 +36,14 @@ public class LoginController extends BaseBizController {
     private UserAuthService mUserAuthService;
     private UserExtraService mUserExtraService;
     private UserBaseService mUserBaseService;
+    private EmailService mEmailService;
 
     @Autowired
-    public LoginController(UserAuthService service1, UserExtraService service2, UserBaseService service3) {
+    public LoginController(UserAuthService service1, UserExtraService service2, UserBaseService service3, EmailService service4) {
         this.mUserAuthService = service1;
         this.mUserExtraService = service2;
         this.mUserBaseService = service3;
+        this.mEmailService = service4;
     }
 
     /**
@@ -154,14 +158,6 @@ public class LoginController extends BaseBizController {
         }
 
         /*
-         * 验证码
-         * 目前未接入验证码，此参数不作为验证条件
-         */
-        if (StringUtil.getLength(code) != Constants.VERIFICATION_CODE_LENGTH) {
-            LogUtil.logValue("CODE", "目前未接入相关短信验证码平台", LogLevel.LEVEL_WARN);
-        }
-
-        /*
          * 需要根据 identityType 来验证此参数
          * 1 手机号  2 微信  3 QQ  4 邮箱
          */
@@ -180,9 +176,31 @@ public class LoginController extends BaseBizController {
             if (!VerifyUtil.isEmail(identifier)) {
                 return AjaxResult.fail("邮箱格式不正确");
             }
-
         } else {
             return AjaxResult.failInvalidParameter("identityType");
+        }
+
+        /*
+         * 验证码
+         * 目前未接入短信验证码，邮箱验证码需要验证
+         */
+        LogUtil.logValue("length = " + StringUtil.getLength(code));
+        LogUtil.logValue("Constants.VERIFICATION_CODE_LENGTH = " + Constants.VERIFICATION_CODE_LENGTH);
+        if (StringUtil.getLength(code) == Constants.VERIFICATION_CODE_LENGTH) {
+            if (identityType == IdentityType.IDENTITY_TYPE_EMAIL) {
+                int codeStatus = mEmailService.checkRegisterEmailCode(identifier, code);
+                if (codeStatus == CodeStatus.CODE_EXPIRE) {
+                    return AjaxResult.fail(CodeConstants.ERROR_CODE_PARAM_ERROR, "验证码已过期，请重新获取");
+                } else if (codeStatus == CodeStatus.CODE_FAIL) {
+                    return AjaxResult.fail(CodeConstants.ERROR_CODE_PARAM_ERROR, "验证码错误");
+                } else {
+                    // 验证码正确
+                }
+            } else {
+                LogUtil.logValue("CODE", "目前未接入相关短信验证码平台", LogLevel.LEVEL_WARN);
+            }
+        } else {
+            return AjaxResult.fail(CodeConstants.ERROR_CODE_PARAM_ERROR, "验证码错误");
         }
 
         // 到数据库中查询是否已经存在此用户

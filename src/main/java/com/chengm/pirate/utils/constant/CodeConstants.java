@@ -68,4 +68,9 @@ public interface CodeConstants {
      */
     int TOKEN_RE_LOGIN = 412;
 
+    /**
+     * 服务端错误
+     */
+    int SERVER_ERROR = 501;
+
 }

@@ -98,4 +98,11 @@ public class StringUtil {
         return output.toString();
     }
 
+    /**
+     * 两个字符串比较
+     */
+    public static boolean equals(String equ1, String equ2) {
+        return StringUtil.getNotNullStr(equ1).equals(StringUtil.getNotNullStr(equ2));
+    }
+
 }

@@ -1,4 +1,4 @@
-package com.chengm.pirate.service;
+package com.chengm.pirate.service.user;
 
 import com.chengm.pirate.dao.UserBaseDao;
 import com.chengm.pirate.pojo.UserBase;

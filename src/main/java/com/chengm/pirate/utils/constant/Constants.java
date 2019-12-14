@@ -1,11 +1,14 @@
 package com.chengm.pirate.utils.constant;
 
+import org.springframework.stereotype.Component;
+
 /**
  * program: CmPirate
  * description: 常量
  * author: ChengMo
  * create: 2019-12-01 16:39
  **/
+@Component
 public class Constants {
 
     /**

@@ -1,7 +1,13 @@
 package com.chengm.pirate.utils;
 
+import com.chengm.pirate.exception.InvokeException;
+import com.chengm.pirate.utils.constant.CodeConstants;
+import com.chengm.pirate.utils.constant.CodeStatus;
 import com.chengm.pirate.utils.constant.Constants;
+import org.springframework.beans.factory.annotation.Autowired;
 
+import java.security.SecureRandom;
+import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -13,8 +19,8 @@ import java.util.regex.Pattern;
  **/
 public class VerifyUtil {
 
-    private VerifyUtil() {
-    }
+    private static final String SYMBOLS = "0123456789";
+    private static final Random RANDOM = new SecureRandom();
 
     /**
      * 验证手机号
@@ -48,6 +54,17 @@ public class VerifyUtil {
             return false;
         }
         return osName.equals(Constants.CLIENT_ANDROID) || osName.equals(Constants.CLIENT_IOS);
+    }
+
+    /**
+     * 生成6位随机验证码
+     */
+    public static String generateVerCode() {
+        char[] nonceChars = new char[6];
+        for (int index = 0; index < nonceChars.length; ++index) {
+            nonceChars[index] = SYMBOLS.charAt(RANDOM.nextInt(SYMBOLS.length()));
+        }
+        return new String(nonceChars);
     }
 
 }

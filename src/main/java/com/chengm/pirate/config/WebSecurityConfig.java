@@ -1,5 +1,6 @@
-package com.chengm.pirate.utils.token;
+package com.chengm.pirate.config;
 
+import com.chengm.pirate.utils.token.TokenInterceptor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;

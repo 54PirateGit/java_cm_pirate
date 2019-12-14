@@ -2,9 +2,9 @@ package com.chengm.pirate.controller.user;
 
 import com.chengm.pirate.base.impl.BaseBizController;
 import com.chengm.pirate.entity.AjaxResult;
-import com.chengm.pirate.service.UserAuthService;
-import com.chengm.pirate.service.UserBaseService;
-import com.chengm.pirate.service.UserExtraService;
+import com.chengm.pirate.service.user.UserAuthService;
+import com.chengm.pirate.service.user.UserBaseService;
+import com.chengm.pirate.service.user.UserExtraService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;

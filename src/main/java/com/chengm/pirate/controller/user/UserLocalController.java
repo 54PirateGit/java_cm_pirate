@@ -1,10 +1,9 @@
 package com.chengm.pirate.controller.user;
 
 import com.chengm.pirate.base.impl.BaseBizController;
-import com.chengm.pirate.dao.UserLocalDao;
 import com.chengm.pirate.entity.AjaxResult;
 import com.chengm.pirate.pojo.UserLocal;
-import com.chengm.pirate.service.UserLocalService;
+import com.chengm.pirate.service.user.UserLocalService;
 import com.chengm.pirate.utils.StringUtil;
 import com.chengm.pirate.utils.constant.CodeConstants;
 import org.springframework.beans.factory.annotation.Autowired;
