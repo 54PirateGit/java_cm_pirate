@@ -8,6 +8,7 @@ import com.chengm.pirate.service.UserAuthService;
 import com.chengm.pirate.service.UserBaseService;
 import com.chengm.pirate.service.UserExtraService;
 import com.chengm.pirate.utils.CollectionsUtil;
+import com.chengm.pirate.utils.DeviceUtils;
 import com.chengm.pirate.utils.StringUtil;
 import com.chengm.pirate.utils.constant.CodeConstants;
 import com.chengm.pirate.utils.constant.IdentityType;
@@ -67,7 +68,7 @@ public class VerityController extends BaseBizController {
     public AjaxResult verityDevice() {
         int identityType = requireIntParam("identityType");
         String identifier = requireStringParam("identifier");
-        String deviceId = requireStringParam("deviceId");
+        String deviceId = getDeviceId();
         String code = requireStringParam("code");
 
         if (identityType == IdentityType.IDENTITY_TYPE_PHONE) {
@@ -99,27 +100,7 @@ public class VerityController extends BaseBizController {
         }
         String loginDeviceId = userExtra.getDeviceId();
         if (!StringUtil.isEmpty(loginDeviceId)) {
-            String[] dIds = loginDeviceId.split(",");
-            List<String> ids = Arrays.asList(dIds);
-            if (!ids.contains(deviceId)) {
-                List<String> idList = new ArrayList<>();
-                for (int i = dIds.length - 1; i >= 0; i--) {
-                    idList.add(dIds[i]);
-                    if (idList.size() == 4) {
-                        break;
-                    }
-                }
-                if (CollectionsUtil.getListSize(idList) > 0) {
-                    Collections.reverse(idList);
-                    StringBuilder builder = new StringBuilder();
-                    for (int i = 0; i < idList.size(); i++) {
-                        builder.append(idList.get(i));
-                        builder.append(",");
-                    }
-                    String deviceIds = builder.toString();
-                    deviceId = deviceIds + deviceId;
-                }
-            }
+            deviceId = DeviceUtils.addUserDeviceId(userExtra.getDeviceId(), deviceId);;
         }
         mUserExtraService.updateDeviceId(userAuth.getUid(), deviceId);
         return AjaxResult.success();

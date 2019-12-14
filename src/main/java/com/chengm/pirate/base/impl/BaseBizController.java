@@ -4,6 +4,8 @@ import com.chengm.pirate.base.BaseController;
 import com.chengm.pirate.exception.InvokeException;
 import com.chengm.pirate.utils.StringUtil;
 import com.chengm.pirate.utils.constant.CodeConstants;
+import com.chengm.pirate.utils.constant.Constants;
+import com.chengm.pirate.utils.log.LogUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -30,6 +32,18 @@ public class BaseBizController implements BaseController {
 
     private Logger logger = LoggerFactory.getLogger(BaseBizController.class);
 
+    // 用户设备信息，用于风控校验
+    private String deviceId;
+    private String osName;
+    private String osVersion;
+
+    // 非必须，有的话就传
+    private String clientVersion;// 客户端版本号
+    private String vendor;// 手机厂商
+    private String deviceName;// 设备型号，如:iphone6s、u880、u8800
+    private String idfa;// 苹果设备的IDFA
+    private String idfv;// 苹果设备的IDFV
+
     /**
      * spring ModelAttribute
      * 放置在方法上面：表示请求该类的每个Action前都会首先执行它，也可以将一些准备数据的操作放置在该方法里面
@@ -39,6 +53,25 @@ public class BaseBizController implements BaseController {
         this.request = request;
         this.response = response;
         this.session = request.getSession();
+
+        // 获取头部参数
+        this.deviceId = request.getHeader("deviceId");
+        this.osName = request.getHeader("osName");
+        this.osVersion = request.getHeader("osVersion");
+
+        if (StringUtil.isEmpty(deviceId) || StringUtil.isEmpty(osName) || StringUtil.isEmpty(osVersion)) {
+            throw new InvokeException(CodeConstants.ERROR_CODE_NOT_REQUIRED_PARAM, "参数缺失");
+        }
+
+        // 头部非必须参数，有的话就传，必要的时候易于扩展
+        this.clientVersion = request.getHeader("clientVersion");
+        this.vendor = request.getHeader("vendor");
+        this.deviceName = request.getHeader("deviceName");
+        this.idfa = request.getHeader("idfa");
+        this.idfv = request.getHeader("idfv");
+
+        LogUtil.logValue("DeviceInfo : " + this.deviceId + "," + this.osName + "," +
+                this.osVersion + "," + this.clientVersion + "," + this.vendor + "," + this.deviceName);
     }
 
     @Override
@@ -205,6 +238,20 @@ public class BaseBizController implements BaseController {
         return retMap;
     }
 
+    @Override
+    public String getRequestMethod() {
+        return StringUtil.getNotNullStr(request.getMethod());
+    }
+
+    /**
+     * 限定请求方式为post
+     */
+    public void requestMethodPost() {
+        if (!getRequestMethod().equals("POST")) {
+            throw new InvokeException(CodeConstants.ERROR_REQUEST_METHOD, "Request mode should be post");
+        }
+    }
+
     /**
      * 对 request 的 get/setAttribute 进行一层包装
      */
@@ -259,5 +306,51 @@ public class BaseBizController implements BaseController {
             value = 0;
         }
         return value;
+    }
+
+    /**
+     * 是否启用校验
+     */
+    public boolean enableVerify() {
+        if (StringUtil.isEmpty(this.deviceId)) {
+            throw new InvokeException(CodeConstants.ERROR_CODE_NOT_REQUIRED_PARAM, "参数缺失");
+        }
+
+        // 如果获取到了用户deviceId则需要校验
+        // 没有获取到则不在关键地方校验用户设备，用户账号容易存在风险
+        // 默认必须要前端在头部参数中携带，但是如果用户权限拒绝则前端无法获取用户设备信息，前端提示，用户自己承担风险
+        return Constants.DEFAULT_DEVICE_ID.equals(this.deviceId);
+    }
+
+    public String getDeviceId() {
+        return deviceId;
+    }
+
+    public String getOsName() {
+        return osName;
+    }
+
+    public String getOsVersion() {
+        return osVersion;
+    }
+
+    public String getClientVersion() {
+        return StringUtil.getNotNullStr(clientVersion);
+    }
+
+    public String getVendor() {
+        return StringUtil.getNotNullStr(vendor);
+    }
+
+    public String getDeviceName() {
+        return StringUtil.getNotNullStr(deviceName);
+    }
+
+    public String getIdfa() {
+        return StringUtil.getNotNullStr(idfa);
+    }
+
+    public String getIdfv() {
+        return StringUtil.getNotNullStr(idfv);
     }
 }

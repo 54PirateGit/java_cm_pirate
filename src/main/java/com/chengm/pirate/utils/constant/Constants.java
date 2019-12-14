@@ -29,4 +29,9 @@ public class Constants {
      */
     public final static String CLIENT_IOS = "IOS";
 
+    /**
+     * 无deviceId时默认值
+     */
+    public final static String DEFAULT_DEVICE_ID = "0";
+
 }

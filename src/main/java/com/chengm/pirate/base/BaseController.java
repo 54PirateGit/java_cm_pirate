@@ -88,4 +88,9 @@ public interface BaseController {
      */
     Map getParamMap();
 
+    /**
+     * 获取请求方式
+     */
+    String getRequestMethod();
+
 }

@@ -21,6 +21,7 @@
         <result column="face200" property="face200" jdbcType="VARCHAR"/>
         <result column="srcface" property="srcface" jdbcType="VARCHAR"/>
         <result column="city" property="city" jdbcType="VARCHAR"/>
+        <result column="push_token" property="pushToken" jdbcType="VARCHAR"/>
         <result column="create_time" property="createTime" jdbcType="TIMESTAMP"/>
         <result column="update_time" property="updateTime" jdbcType="TIMESTAMP"/>
     </resultMap>
@@ -32,10 +33,10 @@
     <insert id="insert" parameterType="com.chengm.pirate.pojo.UserBase">
         insert into user_base
         (uid,user_role,register_source,user_name, gender,birthday,
-        signature, mobile, mobile_bind_time, email, email_bind_time, face, face200, srcface, city)
+        signature, mobile, mobile_bind_time, email, email_bind_time, face, face200, srcface, city, push_token)
         values
         (#{uid},#{userRole},#{registerSource},#{userName},#{gender},#{birthday},
-        #{signature},#{mobile},#{mobileBindTime},#{email},#{emailBindTime},#{face},#{face200},#{srcface},#{city})
+        #{signature},#{mobile},#{mobileBindTime},#{email},#{emailBindTime},#{face},#{face200},#{srcface},#{city},#{pushToken})
     </insert>
 
     <update id="delete" parameterType="long">

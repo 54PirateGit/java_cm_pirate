@@ -6,23 +6,19 @@ import com.chengm.pirate.pojo.UserBase;
 import com.chengm.pirate.pojo.UserExtra;
 import com.chengm.pirate.service.UserBaseService;
 import com.chengm.pirate.service.UserExtraService;
-import com.chengm.pirate.utils.CollectionsUtil;
+import com.chengm.pirate.utils.*;
 import com.chengm.pirate.utils.log.LogLevel;
 import com.chengm.pirate.utils.log.LogUtil;
 import com.chengm.pirate.pojo.UserAuth;
 import com.chengm.pirate.service.UserAuthService;
-import com.chengm.pirate.utils.MD5Util;
-import com.chengm.pirate.utils.StringUtil;
-import com.chengm.pirate.utils.VerifyUtil;
 import com.chengm.pirate.utils.constant.CodeConstants;
 import com.chengm.pirate.utils.constant.Constants;
 import com.chengm.pirate.utils.ids.IdGenerator;
 import com.chengm.pirate.utils.constant.IdentityType;
 import com.chengm.pirate.utils.token.TokenUtil;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.*;
 
@@ -32,8 +28,7 @@ import java.util.*;
  * author: ChengMo
  * create: 2019-12-01 10:20
  **/
-@Controller
-@ResponseBody
+@RestController
 public class LoginController extends BaseBizController {
 
     private UserAuthService mUserAuthService;
@@ -53,6 +48,9 @@ public class LoginController extends BaseBizController {
     @RequestMapping("/user/accountLogin")
     public AjaxResult accountLogin() {
 
+        // 校验请求方式
+        requestMethodPost();
+
         /*
          * 需要的参数
          * identity_type  identifier password
@@ -61,23 +59,10 @@ public class LoginController extends BaseBizController {
         String identifier = requireStringParam("identifier");
         String password = requireStringParam("password");
 
-        /*
-         * 用户扩展信息
-         */
-        String deviceId = requireStringParam("deviceId");// 设备id
-        String osName = requireStringParam("osName");// 设备号:android|ios
-        String osVersion = requireStringParam("osVersion");// 系统版本号:2.2|2.3|4.0|5.1
-
         // 客户端验证， 目前支持 ANDROID IOS
-        if (!VerifyUtil.isClient(osName)) {
+        if (!VerifyUtil.isClient(getOsName())) {
             return AjaxResult.failInvalidParameter("osName");
         }
-
-        String clientVersion = getStringParam("clientVersion");// 客户端版本号，非必填
-        String vendor = getStringParam("vendor");// 手机厂商，非必填
-        String deviceName = getStringParam("deviceName");// 设备型号，如:iphone6s、u880、u8800
-        String idfa = getStringParam("idfa");// 苹果设备的IDFA
-        String idfv = getStringParam("idfv");// 苹果设备的IDFV
 
         /*
          * 需要根据 identityType 来验证此参数
@@ -132,21 +117,17 @@ public class LoginController extends BaseBizController {
             if (!StringUtil.isEmpty(loginDeviceId)) {
                 String[] dIds = loginDeviceId.split(",");
                 List<String> ids = Arrays.asList(dIds);
-                if (!ids.contains(deviceId)) {
+                if (!ids.contains(getDeviceId())) {
                     return AjaxResult.fail(CodeConstants.USER_NEW_DEVICE, "在新的设备登陆，需要先验证");
                 }
             }
         }
 
         // 更新用户扩展信息
-        updateUserExtra(uid, deviceId, osName, osVersion, clientVersion, vendor, deviceName, idfa, idfv);
+        updateUserExtra(uid);
 
         // 将数据返回
-        String token = userAuth.getToken();
-        Map<String, Object> result = new HashMap<>();
-        result.put("uid", uid);
-        result.put("token", token);
-        return AjaxResult.success(result);
+        return AjaxResult.success(getResultMap(userAuth));
     }
 
     /**
@@ -162,23 +143,10 @@ public class LoginController extends BaseBizController {
         String identifier = requireStringParam("identifier");
         String code = requireStringParam("code");
 
-        /*
-         * 用户扩展信息
-         */
-        String deviceId = requireStringParam("deviceId");// 设备id
-        String osName = requireStringParam("osName");// 设备号:android|ios
-        String osVersion = requireStringParam("osVersion");// 系统版本号:2.2|2.3|4.0|5.1
-
         // 客户端验证， 目前支持 ANDROID IOS
-        if (!VerifyUtil.isClient(osName)) {
+        if (!VerifyUtil.isClient(getOsName())) {
             return AjaxResult.failInvalidParameter("osName");
         }
-
-        String clientVersion = getStringParam("clientVersion");// 客户端版本号，非必填
-        String vendor = getStringParam("vendor");// 手机厂商，非必填
-        String deviceName = getStringParam("deviceName");// 设备型号，如:iphone6s、u880、u8800
-        String idfa = getStringParam("idfa");// 苹果设备的IDFA
-        String idfv = getStringParam("idfv");// 苹果设备的IDFV
 
         // 参数无效
         if (identityType < 1 || identityType > 4) {
@@ -231,20 +199,16 @@ public class LoginController extends BaseBizController {
             userAuth = userRegister(ua);
 
             // 更新用户基础信息
-            initUserBase(userAuth.getUid(), identityType, identifier);
+            initUserBase(userAuth.getUid(), identityType, identifier, userAuth.getToken());
         }
 
         long uid = userAuth.getUid();
 
         // 更新用户扩展信息
-        updateUserExtra(uid, deviceId, osName, osVersion, clientVersion, vendor, deviceName, idfa, idfv);
+        updateUserExtra(uid);
 
         // 将数据返回
-        String token = userAuth.getToken();
-        Map<String, Object> result = new HashMap<>();
-        result.put("uid", uid);
-        result.put("token", token);
-        return AjaxResult.success(result);
+        return AjaxResult.success(getResultMap(userAuth));
     }
 
     // 执行用户登录成功操作，更新用户登录信息
@@ -261,7 +225,6 @@ public class LoginController extends BaseBizController {
 
     // 用户注册, 在数据库中生成一个用户对象并将用户信息返回
     private UserAuth userRegister(UserAuth userAuth) {
-
         // 生成uid
         userAuth.setUid(IdGenerator.getDefault().nextId());
         // 给用户生成一个默认密码
@@ -276,15 +239,16 @@ public class LoginController extends BaseBizController {
     }
 
     // 登陆成功时更新用户扩展信息
-    private void updateUserExtra(long uid, String deviceId, String osName, String osVersion,
-                                 String clientVersion, String vendor, String deviceName, String idfa, String idfv) {
+    private void updateUserExtra(long uid) {
         UserExtra userExtra = mUserExtraService.getUserExtra(uid);
         if (userExtra == null) {
             userExtra = new UserExtra();
-            setUserExtra(userExtra, uid, deviceId, osName, osVersion, clientVersion, vendor, deviceName, idfa, idfv);
+            setUserExtra(userExtra, uid, getDeviceId(), getOsName(),
+                    getOsVersion(), getClientVersion(), getVendor(), getDeviceName(), getIdfa(), getIdfv());
             mUserExtraService.insert(userExtra);
         } else {
-            setUserExtra(userExtra, uid, deviceId, osName, osVersion, clientVersion, vendor, deviceName, idfa, idfv);
+            setUserExtra(userExtra, uid, getDeviceId(), getOsName(),
+                    getOsVersion(), getClientVersion(), getVendor(), getDeviceName(), getIdfa(), getIdfv());
             mUserExtraService.update(userExtra);
         }
     }
@@ -297,41 +261,21 @@ public class LoginController extends BaseBizController {
 
         // 最多保存 5 个deviceId
         if (!StringUtil.isEmpty(userExtra.getDeviceId())) {
-            String[] dIds = userExtra.getDeviceId().split(",");
-            List<String> ids = Arrays.asList(dIds);
-            if (!ids.contains(deviceId)) {
-                String deviceIds = "";
-                if (dIds.length >= 5) {
-                    List<String> idList = new ArrayList<>();
-                    for (int i = dIds.length - 1; i >= 0; i--) {
-                        idList.add(dIds[i]);
-                        if (idList.size() == 4) {
-                            break;
-                        }
-                    }
-                    if (CollectionsUtil.getListSize(idList) > 0) {
-                        Collections.reverse(idList);
-                        StringBuilder builder = new StringBuilder();
-                        for (int i = 0; i < idList.size(); i++) {
-                            builder.append(idList.get(i));
-                            builder.append(",");
-                        }
-                        deviceIds = builder.toString();
-                    }
-                } else {
-                    deviceIds = userExtra.getDeviceId() + ",";
-                }
-                deviceId = deviceIds + "," + deviceId;
-                userExtra.setDeviceId(deviceId);
-            }
+            deviceId = DeviceUtils.addUserDeviceId(userExtra.getDeviceId(), deviceId);;
         }
+        userExtra.setDeviceId(deviceId);
         userExtra.setOsName(osName);
         userExtra.setOsVersion(osVersion);
         userExtra.setClientVersion(clientVersion);
         userExtra.setVendor(vendor);
         userExtra.setDeviceName(deviceName);
-        userExtra.setIdfa(idfa);
-        userExtra.setIdfv(idfv);
+        if (osName.equals(Constants.CLIENT_IOS)) {
+            userExtra.setIdfa(idfa);
+            userExtra.setIdfv(idfv);
+        } else {
+            userExtra.setIdfa("");
+            userExtra.setIdfv("");
+        }
         userExtra.setClientName("");
         userExtra.setExtend1("");
         userExtra.setExtend2("");
@@ -339,7 +283,7 @@ public class LoginController extends BaseBizController {
     }
 
     // 设置用户基础信息
-    private void initUserBase(long uid, int identityType, String identifier) {
+    private void initUserBase(long uid, int identityType, String identifier, String pushToken) {
         UserBase userBase = mUserBaseService.getUserBase(uid);
         if (userBase == null) {
             userBase = new UserBase();
@@ -352,9 +296,48 @@ public class LoginController extends BaseBizController {
                 userBase.setEmail(identifier);
                 userBase.setEmailBindTime(System.currentTimeMillis());
             }
+            // 新注册用户都是正常用户
+            userBase.setUserRole(2);
+            userBase.setPushToken(pushToken);
             userBase.setUserName(identifier);
             mUserBaseService.insert(userBase);
         }
+    }
+
+    private Map<String, Object> getResultMap(UserAuth userAuth) {
+        // token放头部返回
+        response.addHeader("token", userAuth.getToken());
+
+        // 查询用户基础信息返回
+        UserBase userBase = mUserBaseService.getUserBase(userAuth.getUid());
+        Map<String, Object> result = new HashMap<>();
+        if (userBase == null) {
+            result.put("uid", userAuth.getUid());
+            result.put("userName", userAuth.getIdentifier());
+        } else {
+            result.put("uid", userBase.getUid());
+            result.put("userName", userBase.getUserName());
+            if (!StringUtil.isEmpty(userBase.getFace())) {
+                result.put("face", userBase.getFace());
+            }
+            if (!StringUtil.isEmpty(userBase.getMobile())) {
+                result.put("mobile", userBase.getMobile());
+            }
+            if (!StringUtil.isEmpty(userBase.getEmail())) {
+                result.put("email", userBase.getEmail());
+            }
+            if (!StringUtil.isEmpty(userBase.getCity())) {
+                result.put("city", userBase.getCity());
+            }
+            if (!StringUtil.isEmpty(userBase.getPushToken())) {
+                result.put("pushToken", userBase.getPushToken());
+            }
+            result.put("gender", userBase.getGender());
+            if (userBase.getBirthday() > 0) {
+                result.put("birthday", DateUtils.formatDate(userBase.getBirthday()));
+            }
+        }
+        return result;
     }
 
 }

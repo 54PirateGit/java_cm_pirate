@@ -34,7 +34,7 @@ public class WebSecurityConfig extends WebMvcConfigurerAdapter {
         TokenInterceptor sessionInterceptor = new TokenInterceptor();
         registry.addInterceptor(sessionInterceptor).addPathPatterns("/**")
                 .excludePathPatterns("/user/codeLogin",
-                        "/user/accountLogin",
+                        "/user/accountLogin", "/verity/*",
                         "/css/**", "/js/**", "/img/**", "/mapper/**");
 //        registry.addInterceptor(sessionInterceptor).excludePathPatterns("/login");
 //        registry.addInterceptor(sessionInterceptor).excludePathPatterns("/verify");

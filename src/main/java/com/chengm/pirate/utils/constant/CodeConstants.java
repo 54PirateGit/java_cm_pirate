@@ -34,6 +34,11 @@ public interface CodeConstants {
     int USER_NOT_EXIST = 403;
 
     /**
+     * 请求方式不对
+     */
+    int ERROR_REQUEST_METHOD = 406;
+
+    /**
      * Token 错误
      */
     int TOKEN_ERROR = 407;
@@ -49,6 +54,11 @@ public interface CodeConstants {
     int ERROR_CODE_PARAM_ERROR = 409;
 
     /**
+     * 无效的参数
+     */
+    int ERROR_CODE_INVALID_PARAMETER = 410;
+
+    /**
      * 在新的设备登陆
      */
     int USER_NEW_DEVICE = 411;
@@ -57,10 +67,5 @@ public interface CodeConstants {
      * Token 错误, 用户登录之后，在此之前的token不可再用了，用于用户登录被顶的情况
      */
     int TOKEN_RE_LOGIN = 412;
-
-    /**
-     * 无效的参数
-     */
-    int ERROR_CODE_INVALID_PARAMETER = 410;
 
 }
