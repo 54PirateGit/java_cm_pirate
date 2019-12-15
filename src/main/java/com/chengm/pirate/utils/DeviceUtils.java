@@ -51,4 +51,20 @@ public class DeviceUtils {
         return devices;
     }
 
+    /**
+     * 判断是否需要设备验证
+     */
+    public static boolean isNeedDeviceVerity(String deviceId, String deviceIds) {
+        if (StringUtil.isEmpty(deviceIds) || StringUtil.isEmpty(deviceId)) {
+            return true;
+        }
+        String[] dis = deviceIds.split(",");
+        for (String id : dis) {
+            if (StringUtil.equals(id, deviceId)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
 }

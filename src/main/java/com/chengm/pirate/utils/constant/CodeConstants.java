@@ -46,17 +46,17 @@ public interface CodeConstants {
     /**
      * 参数缺失
      */
-    int ERROR_CODE_NOT_REQUIRED_PARAM = 408;
+    int NOT_REQUIRED_PARAM = 408;
 
     /**
      * 参数错误
      */
-    int ERROR_CODE_PARAM_ERROR = 409;
+    int PARAM_ERROR = 409;
 
     /**
      * 无效的参数
      */
-    int ERROR_CODE_INVALID_PARAMETER = 410;
+    int INVALID_PARAMETER = 410;
 
     /**
      * 在新的设备登陆
@@ -67,6 +67,21 @@ public interface CodeConstants {
      * Token 错误, 用户登录之后，在此之前的token不可再用了，用于用户登录被顶的情况
      */
     int TOKEN_RE_LOGIN = 412;
+
+    /**
+     * 账号密码登录被锁定，需要重新设置密码或者使用验证码登录，或者24小时之后再尝试登陆
+     */
+    int ACCOUNT_LIMIT = 413;
+
+    /**
+     * 账号异常
+     */
+    int ACCOUNT_EXCEPTION = 414;
+
+    /**
+     * 验证码获取达上限
+     */
+    int OBTAIN_CODE_LIMIT = 415;
 
     /**
      * 服务端错误

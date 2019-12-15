@@ -1,6 +1,7 @@
 package com.chengm.pirate.controller.verity;
 
 import com.chengm.pirate.base.impl.BaseBizController;
+import com.chengm.pirate.config.AppConfig;
 import com.chengm.pirate.entity.AjaxResult;
 import com.chengm.pirate.pojo.UserAuth;
 import com.chengm.pirate.pojo.UserExtra;
@@ -29,20 +30,17 @@ import org.springframework.web.bind.annotation.ResponseBody;
 @ResponseBody
 public class VerityController extends BaseBizController {
 
-    private RedisUtil redisUtil;
     private UserAuthService mUserAuthService;
     private UserExtraService mUserExtraService;
     private UserBaseService mUserBaseService;
     private EmailService mEmailService;
 
     @Autowired
-    public VerityController(UserAuthService service1, UserExtraService service2,
-                            UserBaseService service3, EmailService service4, RedisUtil redisUtil) {
+    public VerityController(UserAuthService service1, UserExtraService service2, UserBaseService service3, EmailService service4) {
         this.mUserAuthService = service1;
         this.mUserExtraService = service2;
         this.mUserBaseService = service3;
         this.mEmailService = service4;
-        this.redisUtil = redisUtil;
     }
 
     /**
@@ -52,34 +50,7 @@ public class VerityController extends BaseBizController {
     public AjaxResult sendCode() {
         int identityType = requireIntParam("identityType");
         String identifier = requireStringParam("identifier");
-
-        if (identityType == IdentityType.IDENTITY_TYPE_EMAIL) {
-            // 邮箱验证
-            if (!VerifyUtil.isEmail(identifier)) {
-                return AjaxResult.fail("邮箱格式不正确");
-            }
-
-            String mailCode = VerifyUtil.generateVerCode();
-            try {
-                mEmailService.sendEmailVerCode(identifier, mailCode);
-
-                // 将验证码放入到redis中，验证用户验证码的时候需要使用
-                redisUtil.set(identifier, mailCode);
-                // 设置有效期为 10 分钟
-                redisUtil.expire(identifier, 10 * 60);
-            } catch (MailSendException e) {
-                e.printStackTrace();
-                return AjaxResult.success("获取失败");
-            }
-        } else if (identityType == IdentityType.IDENTITY_TYPE_PHONE) {
-            // 手机号验证
-            if (!VerifyUtil.isPhone(identifier)) {
-                return AjaxResult.fail("手机号码格式不正确");
-            }
-        } else {
-            return AjaxResult.fail(CodeConstants.ERROR_CODE_PARAM_ERROR, "identifier param error");
-        }
-        return AjaxResult.success("发送成功");
+        return sendCode(identityType, identifier);
     }
 
     /**
@@ -94,7 +65,7 @@ public class VerityController extends BaseBizController {
 
         UserAuth userAuth = mUserAuthService.getUser(identifier);
         if (userAuth == null) {
-            return AjaxResult.fail(CodeConstants.USER_NOT_EXIST, "用户不存在");
+            return AjaxResult.failUserNotExist();
         }
 
         if (identityType == IdentityType.IDENTITY_TYPE_PHONE) {
@@ -102,20 +73,20 @@ public class VerityController extends BaseBizController {
                 return AjaxResult.failInvalidParameter("code");
             }
             if (!code.equals("123456")) {
-                return AjaxResult.fail(CodeConstants.ERROR_CODE_PARAM_ERROR, "验证码不正确");
+                return AjaxResult.fail(CodeConstants.PARAM_ERROR, "验证码不正确");
             }
         } else if (identityType == IdentityType.IDENTITY_TYPE_EMAIL) {
             if (StringUtil.isEmpty(code)) {
                 return AjaxResult.failInvalidParameter("code");
             }
             if (StringUtil.getLength(code) != Constants.VERIFICATION_CODE_LENGTH) {
-                return AjaxResult.fail(CodeConstants.ERROR_CODE_PARAM_ERROR, "验证码不正确");
+                return AjaxResult.fail(CodeConstants.PARAM_ERROR, "验证码不正确");
             } else {
                 int codeStatus = mEmailService.checkRegisterEmailCode(identifier, code);
                 if (codeStatus == CodeStatus.CODE_EXPIRE) {
-                    return AjaxResult.fail(CodeConstants.ERROR_CODE_PARAM_ERROR, "验证码已过期，请重新获取");
+                    return AjaxResult.fail(CodeConstants.PARAM_ERROR, "验证码已过期，请重新获取");
                 } else if (codeStatus == CodeStatus.CODE_FAIL) {
-                    return AjaxResult.fail(CodeConstants.ERROR_CODE_PARAM_ERROR, "验证码错误");
+                    return AjaxResult.fail(CodeConstants.PARAM_ERROR, "验证码错误");
                 } else {
                     // 验证码正确
                 }
@@ -134,6 +105,66 @@ public class VerityController extends BaseBizController {
         }
         mUserExtraService.updateDeviceId(userAuth.getUid(), deviceId);
         return AjaxResult.success();
+    }
+
+    /**
+     * 给系统中已存在账户发送验证码
+     */
+    @RequestMapping("/verity/codeAccount")
+    public AjaxResult sendCodeToAccount() {
+        String identifier = requireStringParam("identifier");
+        UserAuth userAuth = mUserAuthService.getUser(identifier);
+        if (userAuth == null) {
+            return AjaxResult.failUserNotExist();
+        }
+
+        int identityType = userAuth.getIdentityType();
+        return sendCode(identityType, identifier);
+    }
+
+    // 发送验证码操作
+    private AjaxResult sendCode(int identityType, String identifier) {
+        if (identityType == IdentityType.IDENTITY_TYPE_EMAIL) {
+            // 邮箱验证
+            if (!VerifyUtil.isEmail(identifier)) {
+                return AjaxResult.fail("邮箱格式不正确");
+            }
+
+            // 邮箱验证码每天获取次数限制
+            Integer count = (Integer) mRedisUtil.get(RedisKeyUtils.getMailCodeKey(identifier));
+            if (count == null) {
+                count = 0;
+            }
+            if (count > AppConfig.MAIL_CODE_LIMIT_COUNT) {
+                return AjaxResult.fail(CodeConstants.OBTAIN_CODE_LIMIT, "验证码次数获取达上限");
+            }
+
+            String mailCode = VerifyUtil.generateVerCode();
+            try {
+                mEmailService.sendEmailVerCode(identifier, mailCode);
+
+                // 将验证码放入到redis中，验证用户验证码的时候需要使用
+                mRedisUtil.set(identifier, mailCode);
+                // 设置有效期为 10 分钟
+                mRedisUtil.expire(identifier, AppConfig.CODE_EXPIRE_TIME);
+
+                count++;
+                long time = DateUtils.getSecondsToday();
+                mRedisUtil.set(RedisKeyUtils.getMailCodeKey(identifier), count, time);
+            } catch (MailSendException e) {
+                e.printStackTrace();
+                return AjaxResult.success("获取失败");
+            }
+        } else if (identityType == IdentityType.IDENTITY_TYPE_PHONE) {
+            // 手机号验证
+            if (!VerifyUtil.isPhone(identifier)) {
+                return AjaxResult.fail("手机号码格式不正确");
+            }
+        } else {
+            return AjaxResult.fail(CodeConstants.PARAM_ERROR, "identifier param error");
+        }
+
+        return AjaxResult.success("发送成功");
     }
 
 }

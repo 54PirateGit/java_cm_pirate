@@ -1,6 +1,7 @@
 package com.chengm.pirate.controller.user;
 
 import com.chengm.pirate.base.impl.BaseBizController;
+import com.chengm.pirate.config.AppConfig;
 import com.chengm.pirate.entity.AjaxResult;
 import com.chengm.pirate.pojo.UserBase;
 import com.chengm.pirate.pojo.UserExtra;
@@ -78,31 +79,55 @@ public class LoginController extends BaseBizController {
         // 到数据库中查询是否已经存在此用户
         UserAuth userAuth = mUserAuthService.getUser(identifier);
         if (userAuth != null) {
+            // 限定用户密码输入错误次数
+            Integer errorCount = (Integer) mRedisUtil.get(RedisKeyUtils.getPwdInputCountKey(identifier));
+            if (errorCount == null) {
+                errorCount = 0;
+            }
+            if (errorCount > AppConfig.USER_PWD_LIMIT_COUNT) {
+                return AjaxResult.failAccountLimit();
+            }
+
             // 验证密码的正确性, 前端需要对密码d5加密传输
             if (!userAuth.getPassword().equals(password)) {
-                return AjaxResult.fail("密码错误");
+                String failTip = "密码错误";
+                int temp = AppConfig.USER_PWD_LIMIT_COUNT - errorCount;
+                if (temp <= 3 && temp > 0) {
+                    failTip = failTip + "，您还可以输入" + temp + "次";
+                } else if (temp == 0) {
+                    failTip = failTip + "，您的账号密码登录方式已被锁定";
+                }
+                errorCount++;
+                mRedisUtil.set(RedisKeyUtils.getPwdInputCountKey(identifier), errorCount, AppConfig.ACCOUNT_LIMIT_TIME);
+                return AjaxResult.fail(failTip);
+            } else {
+                // 登录成功即删除错误限制记录, 需要重新计算
+                mRedisUtil.del(RedisKeyUtils.getPwdInputCountKey(identifier));
             }
 
             // 用户存在则执行登录操作
             userAuth = userLogin(userAuth);
         } else {
-            return AjaxResult.fail(CodeConstants.USER_NOT_EXIST, "用户不存在");
+            return AjaxResult.failUserNotExist();
         }
 
         // 验证 deviceId
         long uid = userAuth.getUid();
         UserExtra userExtra = mUserExtraService.getUserExtra(uid);
         if (userExtra == null) {
-            return AjaxResult.fail(CodeConstants.USER_NOT_EXIST, "账号异常，请联系管理员");
+            return AjaxResult.fail(CodeConstants.ACCOUNT_EXCEPTION, "账号异常，请联系管理员");
         }
         String loginDeviceId = userExtra.getDeviceId();
-        if (!StringUtil.isEmpty(loginDeviceId)) {
-            String[] dIds = loginDeviceId.split(",");
-            List<String> ids = Arrays.asList(dIds);
-            if (!ids.contains(getDeviceId())) {
-                return AjaxResult.fail(CodeConstants.USER_NEW_DEVICE, "在新的设备登陆，需要先验证");
-            }
+        if (DeviceUtils.isNeedDeviceVerity(getDeviceId(), loginDeviceId)) {
+            return AjaxResult.fail(CodeConstants.USER_NEW_DEVICE, "在新的设备登陆，需要先验证");
         }
+//        if (!StringUtil.isEmpty(loginDeviceId)) {
+//            String[] dIds = loginDeviceId.split(",");
+//            List<String> ids = Arrays.asList(dIds);
+//            if (!ids.contains(getDeviceId())) {
+//                return AjaxResult.fail(CodeConstants.USER_NEW_DEVICE, "在新的设备登陆，需要先验证");
+//            }
+//        }
 
         // 更新用户扩展信息
         updateUserExtra(uid);
@@ -153,15 +178,15 @@ public class LoginController extends BaseBizController {
             if (identityType == IdentityType.IDENTITY_TYPE_EMAIL) {
                 int codeStatus = mEmailService.checkRegisterEmailCode(identifier, code);
                 if (codeStatus == CodeStatus.CODE_EXPIRE) {
-                    return AjaxResult.fail(CodeConstants.ERROR_CODE_PARAM_ERROR, "验证码已过期，请重新获取");
+                    return AjaxResult.fail(CodeConstants.PARAM_ERROR, "验证码已过期，请重新获取");
                 } else if (codeStatus == CodeStatus.CODE_FAIL) {
-                    return AjaxResult.fail(CodeConstants.ERROR_CODE_PARAM_ERROR, "验证码错误");
+                    return AjaxResult.fail(CodeConstants.PARAM_ERROR, "验证码错误");
                 }
             } else {
                 LogUtil.logValue("CODE", "目前未接入相关短信验证码平台", LogLevel.LEVEL_WARN);
             }
         } else {
-            return AjaxResult.fail(CodeConstants.ERROR_CODE_PARAM_ERROR, "验证码错误");
+            return AjaxResult.fail(CodeConstants.PARAM_ERROR, "验证码错误");
         }
 
         // 到数据库中查询是否已经存在此用户
@@ -169,6 +194,9 @@ public class LoginController extends BaseBizController {
         if (userAuth != null) {
             // 用户存在则执行登录操作
             userAuth = userLogin(userAuth);
+
+            // 登录成功即删除错误限制记录, 需要重新计算
+            mRedisUtil.del(RedisKeyUtils.getPwdInputCountKey(userAuth.getIdentifier()));
         } else {
             // 用户不存在则创建新用户执行注册操作
             UserAuth ua = new UserAuth();

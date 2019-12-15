@@ -70,12 +70,12 @@ public class UserAuthService {
     }
 
     /**
-     * 更新用户信息
+     * 修改用户登录密码
      */
-    public void updateUserPwd(UserAuth userAuth) {
+    public void updateUserPwd(long uid, String newPwd) {
         Map<String, Object> param = new HashMap<>();
-        param.put("pwd", userAuth.getPassword());
-        param.put("uid", userAuth.getUid());
+        param.put("pwd", newPwd);
+        param.put("uid", uid);
         mDao.updateUserPwd(param);
     }
 

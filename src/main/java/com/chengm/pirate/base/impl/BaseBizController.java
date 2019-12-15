@@ -1,8 +1,8 @@
 package com.chengm.pirate.base.impl;
 
 import com.chengm.pirate.base.BaseController;
-import com.chengm.pirate.entity.AjaxResult;
 import com.chengm.pirate.exception.InvokeException;
+import com.chengm.pirate.utils.RedisUtil;
 import com.chengm.pirate.utils.StringUtil;
 import com.chengm.pirate.utils.VerifyUtil;
 import com.chengm.pirate.utils.constant.CodeConstants;
@@ -10,6 +10,7 @@ import com.chengm.pirate.utils.constant.Constants;
 import com.chengm.pirate.utils.log.LogUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.ModelAttribute;
 
 import javax.servlet.http.HttpServletRequest;
@@ -31,6 +32,9 @@ public class BaseBizController implements BaseController {
     protected HttpServletResponse response;
 
     protected HttpSession session;
+
+    @Autowired
+    protected RedisUtil mRedisUtil;
 
     private Logger logger = LoggerFactory.getLogger(BaseBizController.class);
 
@@ -62,11 +66,11 @@ public class BaseBizController implements BaseController {
         this.osVersion = request.getHeader("osVersion");
 
         if (StringUtil.isEmpty(deviceId) || StringUtil.isEmpty(osName) || StringUtil.isEmpty(osVersion)) {
-            throw new InvokeException(CodeConstants.ERROR_CODE_NOT_REQUIRED_PARAM, "参数缺失");
+            throw new InvokeException(CodeConstants.NOT_REQUIRED_PARAM, "参数缺失");
         }
         // 客户端验证， 目前支持 ANDROID IOS
         if (!VerifyUtil.isClient(getOsName())) {
-            throw new InvokeException(CodeConstants.ERROR_CODE_INVALID_PARAMETER, "osName");
+            throw new InvokeException(CodeConstants.INVALID_PARAMETER, "osName");
         }
 
         // 头部非必须参数，有的话就传，必要的时候易于扩展
@@ -135,7 +139,7 @@ public class BaseBizController implements BaseController {
     public String requireStringParam(String paramName, String tips) {
         String result = getStringParam(paramName);
         if (StringUtil.isEmpty(result)) {
-            throw new InvokeException(CodeConstants.ERROR_CODE_NOT_REQUIRED_PARAM, tips);
+            throw new InvokeException(CodeConstants.NOT_REQUIRED_PARAM, tips);
         }
         return result;
     }
@@ -159,14 +163,14 @@ public class BaseBizController implements BaseController {
     public int requireIntParam(String paramName, String tipsEmpty, String tipsNaN) {
         String result = request.getParameter(paramName);
         if (StringUtil.isEmpty(result)) {
-            throw new InvokeException(CodeConstants.ERROR_CODE_NOT_REQUIRED_PARAM, tipsEmpty);
+            throw new InvokeException(CodeConstants.NOT_REQUIRED_PARAM, tipsEmpty);
         }
         int value;
         try {
             value = Integer.parseInt(result);
         } catch (Exception ex) {
             logger.debug("参数`" + paramName + "`对应的值`" + result + "`不是数字，返回0", ex);
-            throw new InvokeException(CodeConstants.ERROR_CODE_PARAM_ERROR, tipsNaN);
+            throw new InvokeException(CodeConstants.PARAM_ERROR, tipsNaN);
         }
         return value;
     }
@@ -190,14 +194,14 @@ public class BaseBizController implements BaseController {
     public long requireLongParam(String paramName, String tipsEmpty, String tipsNaN) {
         String result = request.getParameter(paramName);
         if (StringUtil.isEmpty(result)) {
-            throw new InvokeException(CodeConstants.ERROR_CODE_NOT_REQUIRED_PARAM, tipsEmpty);
+            throw new InvokeException(CodeConstants.NOT_REQUIRED_PARAM, tipsEmpty);
         }
         long value;
         try {
             value = Long.parseLong(result);
         } catch (Exception ex) {
             logger.debug("参数`" + paramName + "`对应的值`" + result + "`不是数字，返回0", ex);
-            throw new InvokeException(CodeConstants.ERROR_CODE_PARAM_ERROR, tipsNaN);
+            throw new InvokeException(CodeConstants.PARAM_ERROR, tipsNaN);
         }
         return value;
     }
@@ -221,14 +225,14 @@ public class BaseBizController implements BaseController {
     public double requireDoubleParam(String paramName, String tipsEmpty, String tipsNaN) {
         String result = request.getParameter(paramName);
         if (StringUtil.isEmpty(result)) {
-            throw new InvokeException(CodeConstants.ERROR_CODE_NOT_REQUIRED_PARAM, tipsEmpty);
+            throw new InvokeException(CodeConstants.NOT_REQUIRED_PARAM, tipsEmpty);
         }
         double value;
         try {
             value = Double.parseDouble(result);
         } catch (Exception ex) {
             logger.debug("参数`" + paramName + "`对应的值`" + result + "`不是数字，返回0", ex);
-            throw new InvokeException(CodeConstants.ERROR_CODE_PARAM_ERROR, tipsNaN);
+            throw new InvokeException(CodeConstants.PARAM_ERROR, tipsNaN);
         }
         return value;
     }
@@ -319,7 +323,7 @@ public class BaseBizController implements BaseController {
      */
     public boolean enableVerify() {
         if (StringUtil.isEmpty(this.deviceId)) {
-            throw new InvokeException(CodeConstants.ERROR_CODE_NOT_REQUIRED_PARAM, "参数缺失");
+            throw new InvokeException(CodeConstants.NOT_REQUIRED_PARAM, "参数缺失");
         }
 
         // 如果获取到了用户deviceId则需要校验

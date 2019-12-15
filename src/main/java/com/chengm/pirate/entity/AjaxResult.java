@@ -2,7 +2,6 @@ package com.chengm.pirate.entity;
 
 import com.chengm.pirate.utils.constant.CodeConstants;
 
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -95,14 +94,29 @@ public class AjaxResult<T> {
      * 无效的参数
      */
     public static AjaxResult failInvalidParameter() {
-        return new AjaxResult(CodeConstants.ERROR_CODE_INVALID_PARAMETER, "Invalid parameter");
+        return new AjaxResult(CodeConstants.INVALID_PARAMETER, "Invalid parameter");
     }
 
     /**
      * 无效的参数
      */
     public static AjaxResult failInvalidParameter(Object param) {
-        return new AjaxResult(CodeConstants.ERROR_CODE_INVALID_PARAMETER, "Invalid parameter:" + param);
+        return new AjaxResult(CodeConstants.INVALID_PARAMETER, "Invalid parameter:" + param);
+    }
+
+    /**
+     * 账户已被锁定，需要重新设置登录密码或者使用验证码登录即可
+     */
+    public static AjaxResult failAccountLimit() {
+        return new AjaxResult(CodeConstants.ACCOUNT_LIMIT,
+                "账号密码登录被锁定，需要重新设置密码或者24小时之后再尝试登陆，使用验证码登录即可立即解锁");
+    }
+
+    /**
+     * 用户不存在
+     */
+    public static AjaxResult failUserNotExist() {
+        return new AjaxResult(CodeConstants.USER_NOT_EXIST, "用户不存在");
     }
 
     /**

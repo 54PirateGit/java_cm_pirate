@@ -9,6 +9,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.TimeZone;
 
 /**
@@ -270,6 +271,18 @@ public class DateUtils extends org.apache.commons.lang3.time.DateUtils {
         calendar.set(Calendar.MILLISECOND, 999);
         return calendar.getTime();
     }
+
+    /**
+     * 获取今天还剩多长时间
+     */
+    public static int getSecondsToday() {
+        Calendar curDate = Calendar.getInstance();
+        Calendar tommorowDate = new GregorianCalendar(curDate
+                .get(Calendar.YEAR), curDate.get(Calendar.MONTH), curDate
+                .get(Calendar.DATE) + 1, 0, 0, 0);
+        return (int) (tommorowDate.getTimeInMillis() - curDate.getTimeInMillis()) / 1000;
+    }
+
 
     /**
      * 获取服务器启动时间

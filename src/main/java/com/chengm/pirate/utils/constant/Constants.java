@@ -37,4 +37,14 @@ public class Constants {
      */
     public final static String DEFAULT_DEVICE_ID = "0";
 
+    /**
+     * 旧密码修改
+     */
+    public final static int MODIFY_PWD_WAY_OLD = 1;
+
+    /**
+     * 验证码修改密码
+     */
+    public final static int MODIFY_PWD_WAY_CODE = 2;
+
 }
